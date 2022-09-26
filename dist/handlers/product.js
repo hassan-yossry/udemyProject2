@@ -58,10 +58,10 @@ var show = function (req, res) { return __awaiter(void 0, void 0, void 0, functi
     var product;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, manager.show(req.body.id)];
+            case 0: return [4 /*yield*/, manager.show(req.params.id)];
             case 1:
                 product = _a.sent();
-                res.json(product);
+                res.send(product);
                 return [2 /*return*/];
         }
     });
@@ -84,7 +84,6 @@ var create = function (req, res) { return __awaiter(void 0, void 0, void 0, func
                 return [3 /*break*/, 3];
             case 2:
                 err_1 = _a.sent();
-                console.log('wwwwwwwwwwwwwwww');
                 res.status(400);
                 res.send("couldn't create product Error: ".concat(err_1));
                 return [3 /*break*/, 3];

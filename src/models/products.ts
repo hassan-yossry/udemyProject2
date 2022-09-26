@@ -22,8 +22,9 @@ export class Product_Manager{
             const connect =await client.connect();
             const query = "SELECT * FROM products WHERE id = $1";
             const result = await connect.query(query,[id]);
+            const rec = result.rows[0];
             connect.release();
-            return result.rows[0];
+            return rec;
         }catch(err){
             throw new Error(`Cannot get Product with id = ${id} Error ${err}`)
         }

@@ -13,6 +13,6 @@ describe("Products testing", function () {
         expect(manager.show).toBeDefined();
     });
     it('Exepect delete to be defined', function () {
-        expect(manager.delete).toBeFalsy();
+        expect(manager.delete).toBeDefined();
     });
 });

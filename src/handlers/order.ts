@@ -2,32 +2,48 @@ import {Order_Manager, Order} from '../models/orders'
 import {User} from '../models/users'
 import express, {Request, Response, NextFunction} from 'express'
 import jwt from 'jsonwebtoken';
-
 const manager = new Order_Manager()
 
 const index = async (_req: Request, res: Response) => {
-  const Orders = await manager.index()
-  res.json(Orders)
+  try{
+     const Orders = await manager.index()
+     res.json(Orders)
+  }catch(err){
+    res.status(400)
+    res.json(err)
+
+  }
+  
+
 }
 
 const show = async (req: Request, res: Response) => {
-   const order = await manager.show(req.body.id)
-   res.json(order)
+  try{
+    const order = await manager.show(req.params.id)
+    res.json(order)
+  }catch(err){
+    res.status(400)
+    res.json(err)
+  }
+
 }
 
 const create = async (req: Request, res: Response) => {
     try {
+      
+
+
         const order: Order = {
             id:0,
             user_id: req.body.user_id,
-            product_id: req.body.product_id,
-            quantity: req.body.quantity,
             complete: req.body.complete
         }
 
         const newOrder= await manager.create(order)
-        res.json(newOrder)
+
+        res.send(newOrder);
     } catch(err) {
+
         res.status(400)
         res.json(err)
     }
@@ -43,15 +59,14 @@ const destroy = async (req: Request, res: Response) => {
 }
 const list_orders = async (req:Request, res: Response) =>{
     try{
-        
         const result = await manager.orders_from_user(req.params.uid);
+        
         res.send(result)
     }catch(err){
-        res.status(400).send(`couldn't fetch results`)
+        res.status(400).send(`couldn't fetch results ${err}`)
     }
 }
 const verify = async (req:Request,res:Response, next:NextFunction) =>{
-    console.log('decoded')
 
     if(!req.headers.authorization){
         res.status(400).send('Authorization token not provided');
@@ -86,5 +101,19 @@ const orderRoutes = (app: express.Application) => {
   app.post('/orders', create)
   app.delete('/orders', destroy)
 }
+
+const addProduct = async (_req: Request, res: Response) => {
+    const orderId: string = _req.params.id
+    const productId: string = _req.body.productId
+    const quantity: number = parseInt(_req.body.quantity)
+  
+    try {
+      const addedProduct = await manager.addProduct(quantity, orderId, productId)
+      res.json(addedProduct)
+    } catch(err) {
+      res.status(400)
+      res.json(err)
+    }
+  }
 
 export default orderRoutes

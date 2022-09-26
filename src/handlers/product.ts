@@ -9,12 +9,13 @@ const index = async (_req: Request, res: Response) => {
 }
 
 const show = async (req: Request, res: Response) => {
-   const product = await manager.show(req.body.id)
-   res.json(product)
+   const product = await manager.show(req.params.id)
+   res.send(product)
 }
 
 const create = async (req: Request, res: Response) => {
     try {
+
         const order: Product = {
             id:0,
             name: req.body.name,
@@ -22,9 +23,9 @@ const create = async (req: Request, res: Response) => {
         }
 
         const newProduct= await manager.create(order)
+
         res.json(newProduct)
     } catch(err) {
-      console.log('wwwwwwwwwwwwwwww')
 
         res.status(400)
         res.send(`couldn't create product Error: ${err}`)

@@ -77,7 +77,7 @@ var User_Manager = /** @class */ (function () {
     };
     User_Manager.prototype.show = function (id) {
         return __awaiter(this, void 0, void 0, function () {
-            var connect, query, result, err_2;
+            var connect, query, result, val, err_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -89,8 +89,9 @@ var User_Manager = /** @class */ (function () {
                         return [4 /*yield*/, connect.query(query, [id])];
                     case 2:
                         result = _a.sent();
+                        val = result.rows[0];
                         connect.release();
-                        return [2 /*return*/, result.rows[0]];
+                        return [2 /*return*/, val];
                     case 3:
                         err_2 = _a.sent();
                         throw new Error("Cannot get order with id = ".concat(id, " Error ").concat(err_2));
@@ -109,7 +110,7 @@ var User_Manager = /** @class */ (function () {
                         return [4 /*yield*/, client_1.default.connect()];
                     case 1:
                         connect = _a.sent();
-                        query1 = 'SELECT FROM users WHERE first_name = $1 AND last_name = $2';
+                        query1 = 'SELECT * FROM users WHERE first_name = $1 AND last_name = $2';
                         return [4 /*yield*/, connect.query(query1, [pd.first_name, pd.last_name])];
                     case 2:
                         chk = _a.sent();

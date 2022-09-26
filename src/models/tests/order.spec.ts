@@ -11,6 +11,6 @@ describe("Products testing",()=>{
         expect(manager.show).toBeDefined()
     })
     it('Exepect delete to be defined',()=>{
-        expect(manager.delete).toBeFalsy()
+        expect(manager.delete).toBeDefined()
     })
 })

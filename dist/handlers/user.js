@@ -66,7 +66,7 @@ var index = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
                 res.json(users);
                 return [2 /*return*/];
             case 2:
-                res.send('no token secret!');
+                res.status(401).send('no token secret!');
                 return [2 /*return*/];
         }
     });
@@ -84,7 +84,7 @@ var show = function (req, res) { return __awaiter(void 0, void 0, void 0, functi
                 return [2 /*return*/];
             case 2:
                 err_1 = _a.sent();
-                res.status(401).send("Couldn't show user with id ".concat(req.params.id));
+                res.status(400).send("Couldn't show user with id ".concat(req.params.id, " ").concat(err_1));
                 return [2 /*return*/];
             case 3: return [2 /*return*/];
         }
@@ -137,7 +137,7 @@ var authenticate = function (req, res) { return __awaiter(void 0, void 0, void 0
                 throw new Error('Token secret not provided');
             case 2:
                 err_3 = _a.sent();
-                res.status(400).send("Couldn't authenticate user ".concat(err_3));
+                res.status(401).send("Couldn't authenticate user ".concat(err_3));
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }
@@ -166,7 +166,7 @@ var verify = function (req, res, next) { return __awaiter(void 0, void 0, void 0
     var token, decoded;
     return __generator(this, function (_a) {
         if (!req.headers.authorization) {
-            res.send('Authorization token not provided');
+            res.status(400).send('Authorization token not provided');
             return [2 /*return*/];
         }
         token = req.headers.authorization.split(' ')[1];

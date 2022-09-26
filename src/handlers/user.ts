@@ -26,7 +26,7 @@ const index = async (req: Request, res: Response) => {
         res.json(users)
         return
     }else{
-        res.send('no token secret!');
+        res.status(401).send('no token secret!');
         return;
     }
 
@@ -38,11 +38,12 @@ const show = async (req: Request, res: Response) => {
    
         try{
             const user = await manager.show(req.params.id)
+
             res.json(user)
             return
     
         }catch(err){
-            res.status(401).send(`Couldn't show user with id ${req.params.id}`)
+            res.status(400).send(`Couldn't show user with id ${req.params.id} ${err}`)
             return;
         }
     
@@ -79,6 +80,7 @@ const create = async (req: Request, res: Response) => {
 
 const authenticate = async (req: Request, res: Response)=>{
     try{
+        
         const user = await manager.authenticate({id:0, first_name:req.body.first_name,last_name:req.body.last_name,password:req.body.password});
         
         if(process.env.TOKEN_SECRET){
@@ -92,7 +94,7 @@ const authenticate = async (req: Request, res: Response)=>{
     catch(err){
     
 
-        res.status(400).send(`Couldn't authenticate user ${err}`)
+        res.status(401).send(`Couldn't authenticate user ${err}`)
     }
 }
 const destroy = async (req: Request, res: Response) => {
@@ -106,7 +108,7 @@ const destroy = async (req: Request, res: Response) => {
 }
 const verify = async (req:Request,res:Response, next:NextFunction) =>{
     if(!req.headers.authorization){
-        res.send('Authorization token not provided');
+        res.status(400).send('Authorization token not provided');
         return;
   
       }

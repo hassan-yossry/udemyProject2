@@ -30,9 +30,10 @@ export class User_Manager{
         try{
             const connect =await client.connect();
             const query = "SELECT * FROM users WHERE id = $1";
-            const result = await connect.query(query,[id]);
+            const result = await connect.query(query, [id]);
+            const val = result.rows[0];
             connect.release();
-            return result.rows[0];
+            return val;
         }catch(err){
             throw new Error(`Cannot get order with id = ${id} Error ${err}`)
         }
@@ -40,7 +41,7 @@ export class User_Manager{
     async  create(pd:User):Promise<User> {
         try{
             const connect =await client.connect();
-            const query1 = 'SELECT FROM users WHERE first_name = $1 AND last_name = $2'
+            const query1 = 'SELECT * FROM users WHERE first_name = $1 AND last_name = $2'
             const chk = await connect.query(query1,[pd.first_name,pd.last_name])
             if(chk.rowCount>0)throw new Error("User Already Exists!")
             const hash  = bcrypt.hashSync(pd.password+this.pepper,parseInt(this.saltings))
@@ -68,6 +69,7 @@ export class User_Manager{
 
     async authenticate(u:User){
         try{
+            
             const connect =await client.connect();
             const query = "SELECT * FROM users WHERE first_name = ($1)";
             const result = await connect.query(query,[u.first_name]);
