@@ -26,7 +26,10 @@ Your first task is to read the requirements and update the document with the fol
 ## Routes
 
 ### USERS ROUTES
-A CREATE ROUTE
+A CREATE ROUTE /users [POST] [NEEDS TOKEN]
+AN INDEX ROUTE /users [GET] [NEEDS TOKEN]
+A SHOW ROUTE /users/:uid [GET] [NEEDS TOKEN]
+
 - Design the Postgres database tables based off the data shape requirements. Add to the requirements document the database tables and columns being sure to mark foreign keys.   
 **Example**: You can format this however you like but these types of information should be provided
 Table: Books (id:varchar, title:varchar, author:varchar, published_year:varchar, publisher_id:string[foreign key to publishers table], pages:number)

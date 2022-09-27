@@ -168,13 +168,13 @@ var Order_Manager = /** @class */ (function () {
                                             return [4 /*yield*/, connect.query(query, [itm.product_id])];
                                         case 2:
                                             result = _a.sent();
-                                            return [2 /*return*/, result.rows[0].name];
+                                            connect.release();
+                                            return [2 /*return*/, result.rows[0]];
                                     }
                                 });
                             }); }))];
                     case 3:
                         arr = _a.sent();
-                        console.log(arr);
                         return [2 /*return*/, arr];
                     case 4:
                         err_5 = _a.sent();

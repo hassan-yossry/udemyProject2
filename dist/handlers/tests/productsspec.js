@@ -114,119 +114,125 @@ var prepare = function () { return __awaiter(void 0, void 0, void 0, function ()
         }
     });
 }); };
-var insertProducts = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var conn, tmp, product_id;
+var insertProducts = function (name, price) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp, err_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, client_1.default.connect()];
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, client_1.default.connect()];
             case 1:
                 conn = _a.sent();
-                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING id', ['tv', 10])];
+                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *', [name, price])];
             case 2:
                 tmp = (_a.sent());
-                product_id = tmp.rows[0].id;
-                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2)', ['phone', 20])];
-            case 3:
-                _a.sent();
                 conn.release();
-                return [2 /*return*/, product_id];
+                return [2 /*return*/, tmp.rows[0]];
+            case 3:
+                err_1 = _a.sent();
+                throw new Error("Insert products err ".concat(err_1));
+            case 4: return [2 /*return*/];
         }
     });
 }); };
 describe('products test suit', function () {
     it('create product Api', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var token, product_id, res, conn, res2;
+        var token, res, conn, res2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, prepare()];
                 case 1:
                     token = (_a.sent()).token;
-                    return [4 /*yield*/, insertProducts()];
-                case 2:
-                    product_id = _a.sent();
                     return [4 /*yield*/, req.post('/products').set('Authorization', "bearer ".concat(token)).send({ 'name': 'computer', "price": "1000" })];
-                case 3:
+                case 2:
                     res = _a.sent();
+                    expect(res.body.id).toBeDefined();
                     return [4 /*yield*/, client_1.default.connect()];
-                case 4:
+                case 3:
                     conn = _a.sent();
-                    return [4 /*yield*/, conn.query('SELECT * FROM products WHERE id=$1', [parseInt(product_id)])];
-                case 5:
+                    return [4 /*yield*/, conn.query('SELECT * FROM products WHERE id=$1', [parseInt(res.body.id)])];
+                case 4:
                     res2 = _a.sent();
                     conn.release();
                     expect(res.status).toBe(200);
                     expect(res.body.name).toBe('computer');
                     expect(res.body.price).toBe(1000);
                     expect(res2.rows[0]).toBeDefined();
-                    expect(res2.rows[0].id).toBeDefined();
-                    expect(res2.rows[0].id).toBe(product_id);
+                    expect(res2.rows[0]).toEqual(res.body);
                     return [2 /*return*/];
             }
         });
     }); });
     it('index products API ', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var pdt1, pdt2, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, prepare()];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, insertProducts()];
+                    return [4 /*yield*/, insertProducts('TV SET', 2000)];
                 case 2:
-                    _a.sent();
-                    req.get('/products').then(function (res) {
-                        expect(res.status).toBe(200);
-                        expect(res.body).toBeInstanceOf(Array);
-                        expect(res.body.length).toBe(2);
-                    });
+                    pdt1 = _a.sent();
+                    return [4 /*yield*/, insertProducts('PHONE', 100)];
+                case 3:
+                    pdt2 = _a.sent();
+                    return [4 /*yield*/, req.get('/products')];
+                case 4:
+                    res = _a.sent();
+                    expect(res.status).toBe(200);
+                    expect(res.body).toBeInstanceOf(Array);
+                    expect(res.body.length).toBe(2);
+                    expect(res.body).toEqual([pdt1, pdt2]);
                     return [2 /*return*/];
             }
         });
     }); });
     it('show products API ', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var product_id, res;
+        var pdt, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, prepare()];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, insertProducts()];
+                    return [4 /*yield*/, insertProducts('TV SET', 2000)];
                 case 2:
-                    product_id = _a.sent();
-                    return [4 /*yield*/, req.get("/products/".concat(product_id))];
+                    pdt = _a.sent();
+                    return [4 /*yield*/, req.get("/products/".concat(pdt.id))];
                 case 3:
                     res = _a.sent();
-                    expect(res.body.id).toBeDefined();
-                    expect(res.body.id).toBe(product_id);
+                    expect(res.statusCode).toBe(200);
+                    expect(res.body).toBeDefined();
+                    expect(res.body).toEqual(pdt);
                     return [2 /*return*/];
             }
         });
     }); });
     it('deleting products API ', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var product_id, conn1, res1, res, conn, res2;
+        var pdt, conn1, res1, res, conn, res2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, prepare()];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, insertProducts()];
+                    return [4 /*yield*/, insertProducts('TV SET', 2000)];
                 case 2:
-                    product_id = _a.sent();
+                    pdt = _a.sent();
                     return [4 /*yield*/, client_1.default.connect()];
                 case 3:
                     conn1 = _a.sent();
-                    return [4 /*yield*/, conn1.query('SELECT * FROM products WHERE id=$1', [parseInt(product_id)])];
+                    return [4 /*yield*/, conn1.query('SELECT * FROM products WHERE id=$1', [parseInt(pdt.id)])];
                 case 4:
                     res1 = _a.sent();
                     conn1.release();
                     expect(res1.rowCount).toBe(1);
-                    return [4 /*yield*/, req.delete("/products").send({ id: product_id })];
+                    return [4 /*yield*/, req.delete("/products").send({ id: pdt.id })];
                 case 5:
                     res = _a.sent();
                     expect(res.statusCode).toBe(200);
                     return [4 /*yield*/, client_1.default.connect()];
                 case 6:
                     conn = _a.sent();
-                    return [4 /*yield*/, conn.query('SELECT * FROM products WHERE id=$1', [parseInt(product_id)])];
+                    return [4 /*yield*/, conn.query('SELECT * FROM products WHERE id=$1', [parseInt(pdt.id)])];
                 case 7:
                     res2 = _a.sent();
                     conn.release();

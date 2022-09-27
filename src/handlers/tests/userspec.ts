@@ -14,16 +14,16 @@ userRoutes(app);
 
 const req = supertest(app)
 
-const insertUser = async ()=>{
+const insertUser = async (first_name:string,last_name:string,pass:string)=>{
     let saltings = '10';
     let pepper = 'this is default'
     if(process.env.SECRET_KEY)pepper = process.env.SECRET_KEY;
     if(process.env.SALTING_ROUNDS)saltings = process.env.SALTING_ROUNDS+'';
-    const hash = bcrypt.hashSync('sus'+pepper,parseInt(saltings));
+    const hash = bcrypt.hashSync(pass+pepper,parseInt(saltings));
     const conn = await client.connect();
-    const result = await conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING id',['hassan','yossry',hash])
+    const result = await conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING *',[first_name,last_name,hash])
     
-    const user_id = result.rows[0].id;
+    const user = result.rows[0];
     conn.release()   
    
     if(process.env.TOKEN_SECRET){
@@ -33,34 +33,34 @@ const insertUser = async ()=>{
             last_name:'yossry'
         },
             process.env.TOKEN_SECRET as string);
-        return {user_id,token}
+        return {user,token}
     }
     else{throw new Error('Token secret not provided')}
 }
 
-const prepare =async ()=>{
-    try{
-    const conn = await client.connect();
-    
-    await conn.query('DELETE FROM order_products');
-    await conn.query('DELETE FROM orders');
-    await conn.query('DELETE FROM products');
-    await conn.query('DELETE FROM users');
-    conn.release();
-    
-    const {user_id,token}= await insertUser()
-    
-    return {user_id,token};
-    }catch(err){
-        throw new Error(`A prepare Error ${err}`)
-    }
-    
-}
+
 describe("Testing users handlers",
     ()=>{
+
+        beforeEach(async()=>{
+            try{
+                const conn = await client.connect();
+                
+                await conn.query('DELETE FROM order_products');
+                await conn.query('DELETE FROM orders');
+                await conn.query('DELETE FROM products');
+                await conn.query('DELETE FROM users');
+                conn.release();
+            
+                }catch(err){
+                    throw new Error(`A prepare Error ${err}`)
+                }
+        })
+
+
     it('Login api point', async ()=>{
-        
-            await prepare();
+            
+            await insertUser('hassan','yossry','sus')
                
             const res = await  req.post('/users/login').send({"first_name":"hassan","last_name":"yossry","password":"sus"})
             
@@ -70,9 +70,9 @@ describe("Testing users handlers",
             
             
             
+            
     })
  it('Login api point error', async ()=>{
-        await prepare();
         const res = await req.post('/users/login').send({"first_name":"hassan","last_name":"yossry","password":"suss"})
         
 
@@ -85,17 +85,22 @@ describe("Testing users handlers",
     })
 
     it('create user Api', async ()=>{
-        const {token} = await prepare();
+        const {token} = await insertUser('hassan','yossry','pass123');
         const res = await req.post('/users').set('Authorization',`bearer ${token}`).send({'first_name':'toqa',"last_name":"hossam","password":"pass123"});
         expect(res.status).toBe(200);
         expect(res.body.token).toBeDefined();
          });
 
     it('index users API ', async ()=>{
-        const {token} = await prepare();
+        const {user:user1,token} = await insertUser('hassan','yossry','pass123');
+        const {user:user2} = await insertUser('toqa','hossam','pass123');
+
         const res = await req.get('/users').set('Authorization',`bearer ${token}`)
+        expect(res.statusCode).toBe(200);
         
         expect(res.body).toBeInstanceOf(Array)
+        expect(res.body).toEqual([user1,user2])
+
     })
     
 
@@ -104,24 +109,25 @@ describe("Testing users handlers",
 
     it('show user API ',async ()=>{
         
-        const {user_id,token} = await prepare();
+        const {user,token} = await insertUser('hassan','yossry','pass123');
        
-        const res = await req.get(`/users/${user_id}`).set('Authorization',`bearer ${token}`)
+        const res = await req.get(`/users/${user.id}`).set('Authorization',`bearer ${token}`)
+        expect(res.statusCode).toBe(200);
 
-        expect(res.body.id).toBeDefined()
-        expect(res.body.id).toBe(user_id)
+        expect(res.body).toBeDefined()
+        expect(res.body).toEqual(user)
 
 
             
     })
     
     it('Delete user API',async ()=>{
-        const val = await prepare();
-        const res = await req.delete('/users').set('Authorization',`bearer ${val.token}`).send(
-            {id:val.user_id})
+        const {user,token} = await insertUser('hassan','yossry','pass123');
+        const res = await req.delete('/users').set('Authorization',`bearer ${token}`).send(
+            {id:user.id})
         expect(res.statusCode).toBe(200);
         const conn = await client.connect();
-        const res2 = await conn.query('SELECT * FROM users WHERE id = $1',[parseInt(val.user_id)])
+        const res2 = await conn.query('SELECT * FROM users WHERE id = $1',[parseInt(user.id)])
         expect(res2.rowCount).toBe(0)
             
             

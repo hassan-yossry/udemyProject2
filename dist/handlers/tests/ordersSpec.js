@@ -52,8 +52,8 @@ app.use(body_parser_1.default.json());
 var server = app.listen(3001, function () { console.log('listening ....'); });
 (0, order_1.default)(app);
 var req = (0, supertest_1.default)(app);
-var insertUser = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var saltings, pepper, hash, conn, result, user_id, token;
+var insertUser = function (first_name, last_name, pass) { return __awaiter(void 0, void 0, void 0, function () {
+    var saltings, pepper, hash, conn, result, user, token;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -63,14 +63,14 @@ var insertUser = function () { return __awaiter(void 0, void 0, void 0, function
                     pepper = process_1.default.env.SECRET_KEY;
                 if (process_1.default.env.SALTING_ROUNDS)
                     saltings = process_1.default.env.SALTING_ROUNDS + '';
-                hash = bcrypt_1.default.hashSync('sus' + pepper, parseInt(saltings));
+                hash = bcrypt_1.default.hashSync(pass + pepper, parseInt(saltings));
                 return [4 /*yield*/, client_1.default.connect()];
             case 1:
                 conn = _a.sent();
-                return [4 /*yield*/, conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING id', ['hassan', 'yossry', hash])];
+                return [4 /*yield*/, conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING *', [first_name, last_name, hash])];
             case 2:
                 result = _a.sent();
-                user_id = result.rows[0].id;
+                user = result.rows[0];
                 conn.release();
                 if (process_1.default.env.TOKEN_SECRET) {
                     token = jsonwebtoken_1.default.sign({
@@ -78,7 +78,7 @@ var insertUser = function () { return __awaiter(void 0, void 0, void 0, function
                         first_name: 'hassan',
                         last_name: 'yossry'
                     }, process_1.default.env.TOKEN_SECRET);
-                    return [2 /*return*/, { user_id: user_id, token: token }];
+                    return [2 /*return*/, { user: user, token: token }];
                 }
                 else {
                     throw new Error('Token secret not provided');
@@ -87,149 +87,228 @@ var insertUser = function () { return __awaiter(void 0, void 0, void 0, function
         }
     });
 }); };
-var prepare = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var conn, _a, user_id, token, err_1;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 7, , 8]);
-                return [4 /*yield*/, client_1.default.connect()];
+var insertProducts = function (name, price) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, client_1.default.connect()];
             case 1:
-                conn = _b.sent();
-                return [4 /*yield*/, conn.query('DELETE FROM order_products')];
+                conn = _a.sent();
+                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *', [name, price])];
             case 2:
-                _b.sent();
-                return [4 /*yield*/, conn.query('DELETE FROM orders')];
-            case 3:
-                _b.sent();
-                return [4 /*yield*/, conn.query('DELETE FROM products')];
-            case 4:
-                _b.sent();
-                return [4 /*yield*/, conn.query('DELETE FROM users')];
-            case 5:
-                _b.sent();
+                tmp = (_a.sent());
                 conn.release();
-                return [4 /*yield*/, insertUser()];
-            case 6:
-                _a = _b.sent(), user_id = _a.user_id, token = _a.token;
-                return [2 /*return*/, { user_id: user_id, token: token }];
-            case 7:
-                err_1 = _b.sent();
-                throw new Error("A prepare Error ".concat(err_1));
-            case 8: return [2 /*return*/];
+                return [2 /*return*/, tmp.rows[0]];
         }
     });
 }); };
-var insertProducts = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var user_id, conn, tmp, product_id, order_id;
+var insertOrder = function (user_id, complete) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp, err_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, insertUser()];
-            case 1:
-                user_id = (_a.sent()).user_id;
+            case 0:
+                _a.trys.push([0, 3, , 4]);
                 return [4 /*yield*/, client_1.default.connect()];
-            case 2:
+            case 1:
                 conn = _a.sent();
-                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING id', ['tv', 10])];
-            case 3:
+                return [4 /*yield*/, conn.query('INSERT INTO orders(user_id, complete) VALUES($1,$2) RETURNING *', [user_id, complete])];
+            case 2:
                 tmp = (_a.sent());
-                product_id = tmp.rows[0].id;
-                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2)', ['phone', 20])];
-            case 4:
-                _a.sent();
-                return [4 /*yield*/, conn.query('INSERT INTO orders(user_id, complete) VALUES($1,$2) RETURNING id', [parseInt(user_id), false])];
-            case 5:
-                order_id = (_a.sent()).rows[0].id;
-                return [4 /*yield*/, conn.query('INSERT INTO order_products(order_id, product_id, quantity) VALUES($1,$2, $3)', [parseInt(order_id), parseInt(product_id), 3])];
-            case 6:
-                _a.sent();
                 conn.release();
-                return [2 /*return*/, { product_id: product_id, order_id: order_id }];
+                return [2 /*return*/, tmp.rows[0]];
+            case 3:
+                err_1 = _a.sent();
+                throw new Error("insert order ".concat(err_1));
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+var insertOrderProduct = function (pid, order_id, quantity) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp, err_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, client_1.default.connect()];
+            case 1:
+                conn = _a.sent();
+                return [4 /*yield*/, conn.query('INSERT INTO order_products(product_id, order_id,quantity) VALUES($1,$2,$3) RETURNING *', [pid, order_id, quantity])];
+            case 2:
+                tmp = _a.sent();
+                conn.release();
+                return [2 /*return*/, tmp.rows[0]];
+            case 3:
+                err_2 = _a.sent();
+                throw new Error("insert order ".concat(err_2));
+            case 4: return [2 /*return*/];
         }
     });
 }); };
 describe('Testing product api', function () {
+    beforeEach(function () { return __awaiter(void 0, void 0, void 0, function () {
+        var conn, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 6, , 7]);
+                    return [4 /*yield*/, client_1.default.connect()];
+                case 1:
+                    conn = _a.sent();
+                    return [4 /*yield*/, conn.query('DELETE FROM order_products')];
+                case 2:
+                    _a.sent();
+                    return [4 /*yield*/, conn.query('DELETE FROM orders')];
+                case 3:
+                    _a.sent();
+                    return [4 /*yield*/, conn.query('DELETE FROM products')];
+                case 4:
+                    _a.sent();
+                    return [4 /*yield*/, conn.query('DELETE FROM users')];
+                case 5:
+                    _a.sent();
+                    conn.release();
+                    return [3 /*break*/, 7];
+                case 6:
+                    err_3 = _a.sent();
+                    throw new Error("A prepare Error ".concat(err_3));
+                case 7: return [2 /*return*/];
+            }
+        });
+    }); });
     it('create order Api', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var user_id, res, err_2;
+        var user, res, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 4]);
-                    return [4 /*yield*/, prepare()];
+                    return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
                 case 1:
-                    user_id = (_a.sent()).user_id;
-                    return [4 /*yield*/, (req.post('/orders').send({ 'user_id': (user_id), "complete": false }))];
+                    user = (_a.sent()).user;
+                    return [4 /*yield*/, (req.post('/orders').send({ 'user_id': (user.id), "complete": false }))];
                 case 2:
                     res = _a.sent();
-                    expect(res.body.user_id).toBe(user_id);
+                    expect(res.body.user_id).toBe(user.id);
                     expect(res.body.complete).toBe(false);
                     return [3 /*break*/, 4];
                 case 3:
-                    err_2 = _a.sent();
-                    console.log("error in create order ".concat(err_2));
+                    err_4 = _a.sent();
+                    console.log("error in create order ".concat(err_4));
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
     }); });
     it('index order API ', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var order_id, res;
+        var user1, user2, order1, order2, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, prepare()];
+                case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
                 case 1:
-                    _a.sent();
-                    return [4 /*yield*/, insertProducts()];
+                    user1 = (_a.sent()).user;
+                    return [4 /*yield*/, insertUser('toqa', 'hossam', 'pass123')];
                 case 2:
-                    order_id = (_a.sent()).order_id;
-                    return [4 /*yield*/, req.get('/orders')];
+                    user2 = (_a.sent()).user;
+                    return [4 /*yield*/, insertOrder(user1.id, false)];
                 case 3:
+                    order1 = _a.sent();
+                    return [4 /*yield*/, insertOrder(user2.id, false)];
+                case 4:
+                    order2 = _a.sent();
+                    return [4 /*yield*/, req.get('/orders')];
+                case 5:
                     res = _a.sent();
                     expect(res.status).toBe(200);
                     expect(res.body).toBeInstanceOf(Array);
-                    expect(res.body.length).toBe(1);
-                    expect(res.body[0].id).toBe(order_id);
-                    expect(res.body[0].complete).toBeFalse();
+                    expect(res.body).toEqual([order1, order2]);
                     return [2 /*return*/];
             }
         });
     }); });
     it('show order API ', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var order_id, res;
+        var user, order, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, prepare()];
+                case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
                 case 1:
-                    _a.sent();
-                    return [4 /*yield*/, insertProducts()];
+                    user = (_a.sent()).user;
+                    return [4 /*yield*/, insertOrder(user.id, false)];
                 case 2:
-                    order_id = (_a.sent()).order_id;
-                    return [4 /*yield*/, req.get("/orders/".concat(order_id))];
+                    order = _a.sent();
+                    return [4 /*yield*/, req.get("/orders/".concat(order.id))];
                 case 3:
                     res = _a.sent();
-                    expect(res.body.id).toBeDefined();
-                    expect(res.body.id).toBe(order_id);
+                    expect(res.status).toBe(200);
+                    expect(res.body).toBeDefined();
+                    expect(res.body).toEqual(order);
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('Delete order API', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var user, order, conn, res1, resHTTP, res2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
+                case 1:
+                    user = (_a.sent()).user;
+                    return [4 /*yield*/, insertOrder(user.id, false)];
+                case 2:
+                    order = _a.sent();
+                    return [4 /*yield*/, client_1.default.connect()];
+                case 3:
+                    conn = _a.sent();
+                    return [4 /*yield*/, conn.query('SELECT * FROM orders WHERE id = $1', [parseInt(order.id)])];
+                case 4:
+                    res1 = _a.sent();
+                    expect(res1.rowCount).toBe(1);
+                    return [4 /*yield*/, req.delete('/orders/').send({ id: order.id })];
+                case 5:
+                    resHTTP = _a.sent();
+                    expect(resHTTP.status).toBe(200);
+                    expect(resHTTP.statusCode).toBe(200);
+                    return [4 /*yield*/, conn.query('SELECT * FROM orders WHERE id = $1', [parseInt(order.id)])];
+                case 6:
+                    res2 = _a.sent();
+                    expect(res2.rowCount).toBe(0);
                     return [2 /*return*/];
             }
         });
     }); });
     it('List orders from a user', function () { return __awaiter(void 0, void 0, void 0, function () {
-        var _a, token, user_id, _b, product_id, order_id, res;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0: return [4 /*yield*/, prepare()];
+        var _a, user, token, order, pdt1, pdt2, pdt3, ordPdt1, ordPdt2, ordPdt3, res;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
                 case 1:
-                    _a = _c.sent(), token = _a.token, user_id = _a.user_id;
-                    return [4 /*yield*/, insertProducts()];
+                    _a = _b.sent(), user = _a.user, token = _a.token;
+                    return [4 /*yield*/, insertOrder(user.id, false)];
                 case 2:
-                    _b = _c.sent(), product_id = _b.product_id, order_id = _b.order_id;
-                    return [4 /*yield*/, req.get("/orders/user/".concat(user_id))
-                            .set('Authorization', "Bearer ".concat(token))];
+                    order = _b.sent();
+                    return [4 /*yield*/, insertProducts('TV SET', 300)];
                 case 3:
-                    res = _c.sent();
+                    pdt1 = _b.sent();
+                    return [4 /*yield*/, insertProducts('PHONE SET', 300)];
+                case 4:
+                    pdt2 = _b.sent();
+                    return [4 /*yield*/, insertProducts('playstation SET', 300)];
+                case 5:
+                    pdt3 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt1.id, order.id, 2)];
+                case 6:
+                    ordPdt1 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt2.id, order.id, 2)];
+                case 7:
+                    ordPdt2 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt3.id, order.id, 2)];
+                case 8:
+                    ordPdt3 = _b.sent();
+                    return [4 /*yield*/, req.get("/orders/user/".concat(user.id))
+                            .set('Authorization', "Bearer ".concat(token))];
+                case 9:
+                    res = _b.sent();
+                    expect(res.status).toBe(200);
                     expect(res.body).toBeInstanceOf(Array);
-                    expect(res.body.length).toBe(1);
-                    expect(res.body[0]).toBe('tv');
+                    expect(res.body).toEqual([pdt1, pdt2, pdt3]);
                     return [2 /*return*/];
             }
         });

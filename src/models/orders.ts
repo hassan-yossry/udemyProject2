@@ -71,12 +71,11 @@ export class Order_Manager{
                 const query = "SELECT * FROM products WHERE id = $1";
                 console.log(itm.product_id)
                 const result = await connect.query(query,[itm.product_id]);
-                return result.rows[0].name
+                connect.release();
+                return result.rows[0]
  
 
             }))
-
-            console.log(arr)
 
 
 

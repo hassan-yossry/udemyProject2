@@ -17,17 +17,17 @@ const req = supertest(app);
 
 
 
-const insertUser = async ()=>{
+const insertUser = async (first_name:string,last_name:string,pass:string)=>{
     let saltings = '10';
     let pepper = 'this is default'
     if(process.env.SECRET_KEY)pepper = process.env.SECRET_KEY;
     if(process.env.SALTING_ROUNDS)saltings = process.env.SALTING_ROUNDS+'';
-    const hash = bcrypt.hashSync('sus'+pepper,parseInt(saltings));
+    const hash = bcrypt.hashSync(pass+pepper,parseInt(saltings));
     const conn = await client.connect();
-    const result = await conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING id',['hassan','yossry',hash])
-   
-    const user_id = result.rows[0].id;
-    conn.release();
+    const result = await conn.query('INSERT INTO users(first_name,last_name,password) VALUES($1,$2,$3) RETURNING *',[first_name,last_name,hash])
+    
+    const user = result.rows[0];
+    conn.release()   
    
     if(process.env.TOKEN_SECRET){
        const token = jwt.sign({
@@ -36,49 +36,64 @@ const insertUser = async ()=>{
             last_name:'yossry'
         },
             process.env.TOKEN_SECRET as string);
-        return {user_id,token}
-       
+        return {user,token}
     }
     else{throw new Error('Token secret not provided')}
 }
 
-const prepare =async ()=>{
+const insertProducts = async (name:string, price:number)=>{
+    const conn = await client.connect();
+    const tmp= (await conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *',[name,price]))
+
+    conn.release();
+    return tmp.rows[0];
+}
+
+const insertOrder = async (user_id:number,complete:boolean)=>{
     try{
-    const conn = await client.connect();
-    await conn.query('DELETE FROM order_products');
-    await conn.query('DELETE FROM orders');
-    await conn.query('DELETE FROM products');
-    await conn.query('DELETE FROM users');
-    conn.release();
-
-    const {user_id,token}= await insertUser()
-    return {user_id,token};
+        const conn = await client.connect();
+        const tmp= (await conn.query('INSERT INTO orders(user_id, complete) VALUES($1,$2) RETURNING *',[user_id,complete]))
+        conn.release();
+        return tmp.rows[0];
     }catch(err){
-        throw new Error(`A prepare Error ${err}`)
+        throw new Error(`insert order ${err}`);
     }
-    
-}
-const insertProducts = async ()=>{
-    const {user_id} = await insertUser();
-    const conn = await client.connect();
-    const tmp= (await conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING id',['tv',10]))
-    const product_id = tmp.rows[0].id
-    await conn.query('INSERT INTO products(name, price) VALUES($1,$2)',['phone',20])
-    const order_id =( await conn.query('INSERT INTO orders(user_id, complete) VALUES($1,$2) RETURNING id',[parseInt( user_id),false])).rows[0].id
-    await conn.query('INSERT INTO order_products(order_id, product_id, quantity) VALUES($1,$2, $3)',[parseInt(order_id),parseInt( product_id),3])
-    
-    conn.release();
-    return {product_id,order_id};
+
+
 }
 
+const insertOrderProduct= async(pid:number,order_id:number,quantity:number)=>{
+    try{
+        const conn = await client.connect();
+        const tmp= await conn.query('INSERT INTO order_products(product_id, order_id,quantity) VALUES($1,$2,$3) RETURNING *',[pid,order_id,quantity])
+        conn.release();
+        return tmp.rows[0];
+    }catch(err){
+        throw new Error(`insert order ${err}`);
+    }
+
+}
 describe('Testing product api', 
     ()=>{
-
+    beforeEach(async ()=>{
+        try{
+            const conn = await client.connect();
+            await conn.query('DELETE FROM order_products');
+            await conn.query('DELETE FROM orders');
+            await conn.query('DELETE FROM products');
+            await conn.query('DELETE FROM users');
+            conn.release();
+        
+        
+            }catch(err){
+                throw new Error(`A prepare Error ${err}`)
+            }
+    })
     it('create order Api', async ()=>{
         try{
-        const {user_id,} = await prepare();
-        const res = await (req.post('/orders').send({'user_id':(user_id),"complete":false}));   
-        expect(res.body.user_id).toBe(user_id);
+        const {user,} = await insertUser('hassan','yossry','pass123');
+        const res = await (req.post('/orders').send({'user_id':(user.id),"complete":false}));   
+        expect(res.body.user_id).toBe(user.id);
         expect(res.body.complete).toBe(false);
 
         }catch(err){
@@ -88,14 +103,16 @@ describe('Testing product api',
     });
 
     it('index order API ', async ()=>{
-        await prepare()
-        const {order_id} = await insertProducts()
+        const {user:user1,} = await insertUser('hassan','yossry','pass123');
+
+        const {user:user2} = await insertUser('toqa','hossam','pass123');
+
+        const order1 = await insertOrder(user1.id,false);
+        const order2 = await insertOrder(user2.id,false);
         const res = await req.get('/orders')
         expect(res.status).toBe(200);
         expect(res.body).toBeInstanceOf(Array)
-        expect(res.body.length).toBe(1)
-        expect(res.body[0].id).toBe(order_id)
-        expect(res.body[0].complete).toBeFalse()
+        expect(res.body).toEqual([order1,order2])
 
 
 
@@ -103,24 +120,53 @@ describe('Testing product api',
         
     })
     it('show order API ',async ()=>{
-        await prepare();
-        const {order_id} = await insertProducts();
-        const res = await req.get(`/orders/${order_id}`)
-        expect(res.body.id).toBeDefined()
-        expect(res.body.id).toBe(order_id)
+        const {user:user,} = await insertUser('hassan','yossry','pass123');
+        const order = await insertOrder(user.id,false);
+
+        const res = await req.get(`/orders/${order.id}`)
+        expect(res.status).toBe(200);
+        expect(res.body).toBeDefined()
+        expect(res.body).toEqual(order)
 
     
             
     })
+    it('Delete order API',async ()=>{
+        const {user:user,} = await insertUser('hassan','yossry','pass123');
+        const order = await insertOrder(user.id,false);
+        const conn = await client.connect();
 
+        const res1 = await conn.query('SELECT * FROM orders WHERE id = $1',[parseInt(order.id)])
+        expect(res1.rowCount).toBe(1)
+        const resHTTP =await req.delete('/orders/').send({id:order.id})
+        expect(resHTTP.status).toBe(200);
+
+        expect(resHTTP.statusCode).toBe(200);
+
+        const res2 = await conn.query('SELECT * FROM orders WHERE id = $1',[parseInt(order.id)])
+        expect(res2.rowCount).toBe(0)
+            
+            
+        })
     it('List orders from a user', async()=>{
-        const {token,user_id} = await prepare();
-        const {product_id, order_id} = await insertProducts();
-        const res = await  req.get(`/orders/user/${user_id}`)
+        const {user:user,token} = await insertUser('hassan','yossry','pass123');
+        const order = await insertOrder(user.id,false);
+        const pdt1 = await insertProducts('TV SET',300);
+        const pdt2 = await insertProducts('PHONE SET',300);
+        const pdt3 = await insertProducts('playstation SET',300);
+
+        const ordPdt1 = await insertOrderProduct(pdt1.id,order.id,2);
+        const ordPdt2 = await insertOrderProduct(pdt2.id,order.id,2);
+
+        const ordPdt3 = await insertOrderProduct(pdt3.id,order.id,2);
+
+
+        const res = await  req.get(`/orders/user/${user.id}`)
                            .set('Authorization',`Bearer ${token}`);
+        expect(res.status).toBe(200);
+
         expect(res.body).toBeInstanceOf(Array);
-        expect(res.body.length).toBe(1);
-        expect(res.body[0]).toBe('tv');
+        expect(res.body).toEqual([pdt1,pdt2,pdt3]);
 
 
     })

@@ -54,29 +54,32 @@ const prepare =async ()=>{
     return {user_id,token};
 }
 
-const insertProducts= async ()=>{
-    const conn = await client.connect();
-    const tmp= (await conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING id',['tv',10]))
-    const product_id = tmp.rows[0].id
-    await conn.query('INSERT INTO products(name, price) VALUES($1,$2)',['phone',20])
+const insertProducts= async (name:string,price:number)=>{
+    try{
+        const conn = await client.connect();
+    const tmp= (await conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *',[name,price]))
     conn.release();
-    return product_id
+    return tmp.rows[0];
+    }catch(err){
+        throw new Error(`Insert products err ${err}`)
+
+    }
 }
 describe('products test suit',
     ()=>{
     it('create product Api', async ()=>{
         const {token}=await prepare();
-        const product_id =await insertProducts();
         const res = await req.post('/products').set('Authorization',`bearer ${token}`).send({'name':'computer',"price":"1000"});
+        expect(res.body.id).toBeDefined();
+        
         const conn = await client.connect();
-        const res2 = await conn.query('SELECT * FROM products WHERE id=$1',[parseInt(product_id)]);
+        const res2 = await conn.query('SELECT * FROM products WHERE id=$1',[parseInt(res.body.id)]);
         conn.release();
         expect(res.status).toBe(200);
         expect(res.body.name).toBe('computer');
         expect(res.body.price).toBe(1000);
         expect(res2.rows[0]).toBeDefined();
-        expect(res2.rows[0].id).toBeDefined();
-        expect(res2.rows[0].id).toBe(product_id);
+        expect(res2.rows[0]).toEqual(res.body);
 
 
 
@@ -85,37 +88,39 @@ describe('products test suit',
 
     it('index products API ', async()=>{
         await prepare()
-        await insertProducts();
-        req.get('/products').then(res=>{
-            expect(res.status).toBe(200);
-            expect(res.body).toBeInstanceOf(Array)
-            expect(res.body.length).toBe(2)
-            
-        })
+        const pdt1 = await insertProducts('TV SET' ,2000);
+        const pdt2 = await insertProducts('PHONE' ,100);
+
+        const res =await req.get('/products')
+        expect(res.status).toBe(200);
+        expect(res.body).toBeInstanceOf(Array)
+        expect(res.body.length).toBe(2)
+        expect(res.body).toEqual([pdt1,pdt2])
+        
     })
     it('show products API ',async ()=>{
         await prepare();
-        const product_id=await insertProducts();
-        const res = await req.get(`/products/${product_id}`)
-        expect(res.body.id).toBeDefined()
-        expect(res.body.id).toBe(product_id)
+        const pdt = await insertProducts('TV SET' ,2000);
+        const res = await req.get(`/products/${pdt.id}`)
+        expect(res.statusCode).toBe(200)
+        expect(res.body).toBeDefined()
+        expect(res.body).toEqual(pdt)
                  
     })
     it('deleting products API ',async ()=>{
         await prepare();
-        const product_id=await insertProducts();
+        const pdt = await insertProducts('TV SET' ,2000);
 
         const conn1 = await client.connect();
-        const res1 = await conn1.query('SELECT * FROM products WHERE id=$1',[parseInt(product_id)]);
+        const res1 = await conn1.query('SELECT * FROM products WHERE id=$1',[parseInt(pdt.id)]);
         conn1.release();
 
         expect(res1.rowCount).toBe(1);
 
-        const res = await req.delete(`/products`).send({id:product_id})
+        const res = await req.delete(`/products`).send({id:pdt.id})
         expect(res.statusCode).toBe(200)
-
         const conn = await client.connect();
-        const res2 = await conn.query('SELECT * FROM products WHERE id=$1',[parseInt(product_id)]);
+        const res2 = await conn.query('SELECT * FROM products WHERE id=$1',[parseInt(pdt.id)]);
         conn.release();
         expect(res2.rowCount).toBe(0);
 
