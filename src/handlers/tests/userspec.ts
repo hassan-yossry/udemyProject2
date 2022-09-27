@@ -109,21 +109,25 @@ describe("Testing users handlers",
         const res = await req.get(`/users/${user_id}`).set('Authorization',`bearer ${token}`)
 
         expect(res.body.id).toBeDefined()
+        expect(res.body.id).toBe(user_id)
+
 
             
     })
     
-    it('Delete user API',done=>{
-        prepare().then(val=>{
-            req.delete('/users').set('Authorization',`bearer ${val.token}`).send(
-                {id:val.user_id}
-            ).then(res =>{
-                expect(res.statusCode).toBe(200);
-                done();
-            })
+    it('Delete user API',async ()=>{
+        const val = await prepare();
+        const res = await req.delete('/users').set('Authorization',`bearer ${val.token}`).send(
+            {id:val.user_id})
+        expect(res.statusCode).toBe(200);
+        const conn = await client.connect();
+        const res2 = await conn.query('SELECT * FROM users WHERE id = $1',[parseInt(val.user_id)])
+        expect(res2.rowCount).toBe(0)
+            
+            
         })
         
-    })   
+       
 
    afterAll(async ()=>{
     server.close()

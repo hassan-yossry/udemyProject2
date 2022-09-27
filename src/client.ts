@@ -11,7 +11,7 @@ const
     PG_USER,
     PG_PASSWORD,
     PG_DB,
-    PG_TEST
+    PG_DB_TEST
     
 } = process.env
 let client:Pool;
@@ -29,7 +29,7 @@ if(ENV === "dev")
         host:PG_HOST,
         password:PG_PASSWORD,
         user:PG_USER,
-        database:PG_TEST
+        database:PG_DB_TEST
     
 })}
 

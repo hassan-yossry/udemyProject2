@@ -195,18 +195,33 @@ describe("Testing users handlers", function () {
                 case 2:
                     res = _b.sent();
                     expect(res.body.id).toBeDefined();
+                    expect(res.body.id).toBe(user_id);
                     return [2 /*return*/];
             }
         });
     }); });
-    it('Delete user API', function (done) {
-        prepare().then(function (val) {
-            req.delete('/users').set('Authorization', "bearer ".concat(val.token)).send({ id: val.user_id }).then(function (res) {
-                expect(res.statusCode).toBe(200);
-                done();
-            });
+    it('Delete user API', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var val, res, conn, res2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, prepare()];
+                case 1:
+                    val = _a.sent();
+                    return [4 /*yield*/, req.delete('/users').set('Authorization', "bearer ".concat(val.token)).send({ id: val.user_id })];
+                case 2:
+                    res = _a.sent();
+                    expect(res.statusCode).toBe(200);
+                    return [4 /*yield*/, client_1.default.connect()];
+                case 3:
+                    conn = _a.sent();
+                    return [4 /*yield*/, conn.query('SELECT * FROM users WHERE id = $1', [parseInt(val.user_id)])];
+                case 4:
+                    res2 = _a.sent();
+                    expect(res2.rowCount).toBe(0);
+                    return [2 /*return*/];
+            }
         });
-    });
+    }); });
     afterAll(function () { return __awaiter(void 0, void 0, void 0, function () {
         return __generator(this, function (_a) {
             server.close();

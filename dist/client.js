@@ -10,7 +10,7 @@ var result = dotenv_1.default.config({ path: path_1.default.join(__dirname, '../
 if (result.error) {
     throw Error("No config");
 }
-var _a = process.env, ENV = _a.ENV, PG_HOST = _a.PG_HOST, PG_USER = _a.PG_USER, PG_PASSWORD = _a.PG_PASSWORD, PG_DB = _a.PG_DB, PG_TEST = _a.PG_TEST;
+var _a = process.env, ENV = _a.ENV, PG_HOST = _a.PG_HOST, PG_USER = _a.PG_USER, PG_PASSWORD = _a.PG_PASSWORD, PG_DB = _a.PG_DB, PG_DB_TEST = _a.PG_DB_TEST;
 var client;
 if (ENV === "dev") {
     client = new pg_1.Pool({
@@ -25,7 +25,7 @@ else {
         host: PG_HOST,
         password: PG_PASSWORD,
         user: PG_USER,
-        database: PG_TEST
+        database: PG_DB_TEST
     });
 }
 exports.default = client;
