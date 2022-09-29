@@ -34,7 +34,7 @@ CREATE TABLE order_products (
 );
 ### USERS ROUTES
 A LOGIN ROUTE /user/login [POST] [first_name,last_name, password] in request body
-A CREATE ROUTE /users [POST] [NEEDS TOKEN]
+A CREATE ROUTE /users [POST]
 AN INDEX ROUTE /users [GET] [NEEDS TOKEN]
 A SHOW ROUTE /users/:uid [GET] [NEEDS TOKEN]
 A DELETE ROUTE /users [DELETE] [NEEDS TOKEN]

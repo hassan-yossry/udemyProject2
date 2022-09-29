@@ -133,7 +133,7 @@ const userRoutes = (app: express.Application) => {
   app.post('/users/login/', [authenticate])
   app.get('/users', [verify,index])
   app.get('/users/:id', [verify,show])
-  app.post('/users', [verify,create])
+  app.post('/users', [create])
   app.delete('/users', [verify,destroy])
 }
 

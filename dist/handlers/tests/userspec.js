@@ -154,7 +154,7 @@ describe("Testing users handlers", function () {
                 case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
                 case 1:
                     token = (_a.sent()).token;
-                    return [4 /*yield*/, req.post('/users').set('Authorization', "bearer ".concat(token)).send({ 'first_name': 'toqa', "last_name": "hossam", "password": "pass123" })];
+                    return [4 /*yield*/, req.post('/users').send({ 'first_name': 'toqa', "last_name": "hossam", "password": "pass123" })];
                 case 2:
                     res = _a.sent();
                     expect(res.status).toBe(200);

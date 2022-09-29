@@ -86,7 +86,7 @@ describe("Testing users handlers",
 
     it('create user Api', async ()=>{
         const {token} = await insertUser('hassan','yossry','pass123');
-        const res = await req.post('/users').set('Authorization',`bearer ${token}`).send({'first_name':'toqa',"last_name":"hossam","password":"pass123"});
+        const res = await req.post('/users').send({'first_name':'toqa',"last_name":"hossam","password":"pass123"});
         expect(res.status).toBe(200);
         expect(res.body.token).toBeDefined();
          });
