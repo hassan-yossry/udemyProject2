@@ -142,44 +142,24 @@ var Order_Manager = /** @class */ (function () {
     };
     Order_Manager.prototype.orders_from_user = function (id) {
         return __awaiter(this, void 0, void 0, function () {
-            var connect, query, result, arr, err_5;
-            var _this = this;
+            var connect, query, result, err_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 4, , 5]);
+                        _a.trys.push([0, 3, , 4]);
                         return [4 /*yield*/, client_1.default.connect()];
                     case 1:
                         connect = _a.sent();
-                        query = "SELECT order_products.product_id FROM order_products INNER JOIN orders ON order_products.order_id = orders.id";
-                        return [4 /*yield*/, connect.query(query)];
+                        query = "SELECT  orders.id,orders.user_id, orders.complete, order_products.product_id, order_products.quantity FROM order_products INNER JOIN orders ON order_products.order_id = orders.id WHERE orders.user_id = $1";
+                        return [4 /*yield*/, connect.query(query, [parseInt(id)])];
                     case 2:
                         result = _a.sent();
                         connect.release();
-                        return [4 /*yield*/, Promise.all(result.rows.map(function (itm) { return __awaiter(_this, void 0, void 0, function () {
-                                var connect, query, result;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0: return [4 /*yield*/, client_1.default.connect()];
-                                        case 1:
-                                            connect = _a.sent();
-                                            query = "SELECT * FROM products WHERE id = $1";
-                                            console.log(itm.product_id);
-                                            return [4 /*yield*/, connect.query(query, [itm.product_id])];
-                                        case 2:
-                                            result = _a.sent();
-                                            connect.release();
-                                            return [2 /*return*/, result.rows[0]];
-                                    }
-                                });
-                            }); }))];
+                        return [2 /*return*/, result.rows];
                     case 3:
-                        arr = _a.sent();
-                        return [2 /*return*/, arr];
-                    case 4:
                         err_5 = _a.sent();
                         throw new Error("Cannot fetch Order with id = ".concat(id, " Error: ").concat(err_5));
-                    case 5: return [2 /*return*/];
+                    case 4: return [2 /*return*/];
                 }
             });
         });
@@ -213,7 +193,3 @@ var Order_Manager = /** @class */ (function () {
     return Order_Manager;
 }());
 exports.Order_Manager = Order_Manager;
-//const tst= new Order_Manager();
-//console.log('hi')
-//tst.create({id:0, user_id:2,product_id:2,complete:true,quantity:1}).then(res=>console.log(res))
-//tst.index().then(res => console.log(res))

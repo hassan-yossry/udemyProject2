@@ -155,7 +155,7 @@ describe("Products testing", function () {
             }
         });
     }); });
-    it("Expect show to return an product", function () { return __awaiter(void 0, void 0, void 0, function () {
+    it("Expect show to return a product", function () { return __awaiter(void 0, void 0, void 0, function () {
         var pdt, res;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -174,7 +174,7 @@ describe("Products testing", function () {
             }
         });
     }); });
-    it("Expect delete to delete an product", function () { return __awaiter(void 0, void 0, void 0, function () {
+    it("Expect delete to delete a product", function () { return __awaiter(void 0, void 0, void 0, function () {
         var pdt, res, conn, res2;
         return __generator(this, function (_a) {
             switch (_a.label) {

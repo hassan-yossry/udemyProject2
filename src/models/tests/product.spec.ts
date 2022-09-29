@@ -69,7 +69,7 @@ describe("Products testing",()=>{
 
     })
 
-    it("Expect show to return an product",async()=>{
+    it("Expect show to return a product",async()=>{
         await prepare();
     
         const pdt = await insertProduct('TV SET',2000);
@@ -80,7 +80,7 @@ describe("Products testing",()=>{
 
     })
 
-    it("Expect delete to delete an product",async()=>{
+    it("Expect delete to delete a product",async()=>{
         await prepare();
     
         const pdt = await insertProduct('TV SET',2000);

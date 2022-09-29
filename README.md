@@ -1,62 +1,80 @@
-# Storefront Backend Project
+## Database Build in postgres
 
-## Getting Started
+CREATE DATABASE store_db;
+CREATE DATABASE store_db_test;
+CREATE USER store_admin WITH password 'pass123';
+GRANT ALL PRIVILEGES ON DATABASE store_db TO store_admin;
+GRANT ALL PRIVILEGES ON DATABASE store_db_test TO store_admin;
 
-This repo contains a basic Node and Express app to get you started in constructing an API. To get started, clone this repo and run `yarn` in your terminal at the project root.
+### Database Scheme
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    price INTEGER
+);
 
-## Required Technologies
-Your application must make use of the following libraries:
-- Postgres for the database
-- Node/Express for the application logic
-- dotenv from npm for managing environment variables
-- db-migrate from npm for migrations
-- jsonwebtoken from npm for working with JWTs
-- jasmine from npm for testing
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    password VARCHAR
+);
 
-## Steps to Completion
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    complete BOOLEAN
+);
 
-### 1. Plan to Meet Requirements
-
-In this repo there is a `REQUIREMENTS.md` document which outlines what this API needs to supply for the frontend, as well as the agreed upon data shapes to be passed between front and backend. This is much like a document you might come across in real life when building or extending an API. 
-
-Your first task is to read the requirements and update the document with the following:
-- Determine the RESTful route for each endpoint listed. Add the RESTful route and HTTP verb to the document so that the frontend developer can begin to build their fetch requests.    
-**Example**: A SHOW route: 'blogs/:id' [GET] 
-
-## Routes
-
+CREATE TABLE order_products (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    product_id INTEGER REFERENCES products(id),
+    quantity INTEGER
+);
 ### USERS ROUTES
+A LOGIN ROUTE /user/login [POST] [first_name,last_name, password] in request body
 A CREATE ROUTE /users [POST] [NEEDS TOKEN]
 AN INDEX ROUTE /users [GET] [NEEDS TOKEN]
 A SHOW ROUTE /users/:uid [GET] [NEEDS TOKEN]
+A DELETE ROUTE /users [DELETE] [NEEDS TOKEN]
 
-- Design the Postgres database tables based off the data shape requirements. Add to the requirements document the database tables and columns being sure to mark foreign keys.   
-**Example**: You can format this however you like but these types of information should be provided
-Table: Books (id:varchar, title:varchar, author:varchar, published_year:varchar, publisher_id:string[foreign key to publishers table], pages:number)
+### PRODUCTS ROUTES
+A CREATE ROUTE /products [POST] [NEEDS TOKEN]
+AN INDEX ROUTE /products [GET] 
+A SHOW ROUTE /products/:uid [GET] 
+A DELETE ROUTE /products [DELETE]
 
-**NOTE** It is important to remember that there might not be a one to one ratio between data shapes and database tables. Data shapes only outline the structure of objects being passed between frontend and API, the database may need multiple tables to store a single shape. 
+### orders ROUTES
+A CREATE ROUTE /orders [POST] 
+AN INDEX ROUTE /orders [GET] 
+A SHOW ROUTE /orders/:uid [GET] 
+A DELETE ROUTE /orders [DELETE]
+A LIST ORDERS FROM USER ROUTE /orders/user/:uid [GET]
 
-### 2.  DB Creation and Migrations
+### Environement Variables
 
-Now that you have the structure of the databse outlined, it is time to create the database and migrations. Add the npm packages dotenv and db-migrate that we used in the course and setup your Postgres database. If you get stuck, you can always revisit the database lesson for a reminder. 
+PG_HOST="HOST IP ADD"
+PG_DB="database name" "store_db"
+PG_DB_TST="test database name" "store_db_test"
+PG_USER="admin user namee" "store_admin"
+PG_PASSWORD="admin password" "pass123"
+TOKEN_SECRET=" token encrypt secret""THis a SecRET"
+ENV="dev"
 
-You must also ensure that any sensitive information is hashed with bcrypt. If any passwords are found in plain text in your application it will not pass.
+### usage
+to install dependencies
+yarn add
+npm i jasmine -g
 
-### 3. Models
 
-Create the models for each database table. The methods in each model should map to the endpoints in `REQUIREMENTS.md`. Remember that these models should all have test suites and mocks.
+to start the server
+npm run start
 
-### 4. Express Handlers
+to test
+npm run test
 
-Set up the Express handlers to route incoming requests to the correct model method. Make sure that the endpoints you create match up with the enpoints listed in `REQUIREMENTS.md`. Endpoints must have tests and be CORS enabled. 
+to compile typescript
+npm run tsc
 
-### 5. JWTs
 
-Add JWT functionality as shown in the course. Make sure that JWTs are required for the routes listed in `REQUIUREMENTS.md`.
-
-### 6. QA and `README.md`
-
-Before submitting, make sure that your project is complete with a `README.md`. Your `README.md` must include instructions for setting up and running your project including how you setup, run, and connect to your database. 
-
-Before submitting your project, spin it up and test each endpoint. If each one responds with data that matches the data shapes from the `REQUIREMENTS.md`, it is ready for submission!
-x

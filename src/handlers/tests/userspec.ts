@@ -123,10 +123,13 @@ describe("Testing users handlers",
     
     it('Delete user API',async ()=>{
         const {user,token} = await insertUser('hassan','yossry','pass123');
+        const conn = await client.connect();
+        const res1 = await conn.query('SELECT * FROM users WHERE id = $1',[parseInt(user.id)])
+        expect(res1.rowCount).toBe(1);
+        
         const res = await req.delete('/users').set('Authorization',`bearer ${token}`).send(
             {id:user.id})
         expect(res.statusCode).toBe(200);
-        const conn = await client.connect();
         const res2 = await conn.query('SELECT * FROM users WHERE id = $1',[parseInt(user.id)])
         expect(res2.rowCount).toBe(0)
             

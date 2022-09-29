@@ -157,16 +157,17 @@ describe('Testing product api',
 
         const ordPdt1 = await insertOrderProduct(pdt1.id,order.id,2);
         const ordPdt2 = await insertOrderProduct(pdt2.id,order.id,2);
-
         const ordPdt3 = await insertOrderProduct(pdt3.id,order.id,2);
 
 
         const res = await  req.get(`/orders/user/${user.id}`)
                            .set('Authorization',`Bearer ${token}`);
         expect(res.status).toBe(200);
-
         expect(res.body).toBeInstanceOf(Array);
-        expect(res.body).toEqual([pdt1,pdt2,pdt3]);
+        expect(res.body[0]).toEqual({...order, product_id:pdt1.id,quantity:ordPdt1.quantity});
+        expect(res.body[1]).toEqual({...order, product_id:pdt2.id,quantity:ordPdt2.quantity});
+        expect(res.body[2]).toEqual({...order, product_id:pdt3.id,quantity:ordPdt3.quantity});
+
 
 
     })

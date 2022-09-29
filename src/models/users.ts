@@ -89,8 +89,3 @@ export class User_Manager{
     }
 }
 
-//const tst = new User_Manager();
-//tst.create({id:0, first_name:"soka",last_name:"yossry",password:"sus"})
-//tst.index().then((res)=>console.log(res))
-//tst.authenticate({id:0,first_name:"hassan",last_name:"yossry",password:"sus"}).then((res)=>console.log(res))
-//tst.delete("8").then(res=>console.log(res))

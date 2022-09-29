@@ -42,6 +42,27 @@ const insertUser = async (first_name:string,last_name:string,password:string):Pr
     }
     else{throw new Error('Token secret not provided')}
 }
+const insertProducts = async (name:string, price:number)=>{
+    const conn = await client.connect();
+    const tmp= (await conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *',[name,price]))
+
+    conn.release();
+    return tmp.rows[0];
+}
+
+
+const insertOrderProduct= async(pid:number,order_id:number,quantity:number)=>{
+    try{
+        const conn = await client.connect();
+        const tmp= await conn.query('INSERT INTO order_products(product_id, order_id,quantity) VALUES($1,$2,$3) RETURNING *',[pid,order_id,quantity])
+        conn.release();
+        return tmp.rows[0];
+    }catch(err){
+        throw new Error(`insert order ${err}`);
+    }
+
+}
+
 describe("Products testing",()=>{
     it("Expect create to be defined",()=>{
         expect(manager.create).toBeDefined();
@@ -100,7 +121,7 @@ describe("Products testing",()=>{
         expect(res).toEqual(ordr);
     })
 
-    it("Expect delete to delete an order",async()=>{
+    it("Expect to delete an order",async()=>{
     
         const {user} =await insertUser('hassan','yossry','pass123');
         const ordr = await insertOrder(String(user.id),false);
@@ -110,6 +131,29 @@ describe("Products testing",()=>{
         const res2 = await conn.query('SELECT * FROM orders WHERE id = $1',[ordr.id])
         conn.release();
         expect(res2.rowCount).toBe(0);
+
+    })
+
+    it("Expect list user orders to work",async()=>{
+        const {user:user,token} = await insertUser('hassan','yossry','pass123');
+        const order = await insertOrder(String(user.id),false);
+        const pdt1 = await insertProducts('TV SET',300);
+        const pdt2 = await insertProducts('PHONE SET',300);
+        const pdt3 = await insertProducts('playstation SET',300);
+
+        const ordPdt1 = await insertOrderProduct(pdt1.id,order.id,2);
+        const ordPdt2 = await insertOrderProduct(pdt2.id,order.id,2);
+        const ordPdt3 = await insertOrderProduct(pdt3.id,order.id,2);
+        const result = await manager.orders_from_user(String(user.id))
+
+        expect(result).toBeInstanceOf(Array);
+        expect(result[0]).toEqual({...order, product_id:pdt1.id, quantity:2});
+        expect(result[1]).toEqual({...order, product_id:pdt2.id, quantity:2});
+        expect(result[2]).toEqual({...order, product_id:pdt3.id, quantity:2});
+
+
+
+
 
     })
 })

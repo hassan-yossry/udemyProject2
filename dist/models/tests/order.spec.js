@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -104,6 +115,42 @@ var insertUser = function (first_name, last_name, password) { return __awaiter(v
         }
     });
 }); };
+var insertProducts = function (name, price) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, client_1.default.connect()];
+            case 1:
+                conn = _a.sent();
+                return [4 /*yield*/, conn.query('INSERT INTO products(name, price) VALUES($1,$2) RETURNING *', [name, price])];
+            case 2:
+                tmp = (_a.sent());
+                conn.release();
+                return [2 /*return*/, tmp.rows[0]];
+        }
+    });
+}); };
+var insertOrderProduct = function (pid, order_id, quantity) { return __awaiter(void 0, void 0, void 0, function () {
+    var conn, tmp, err_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, client_1.default.connect()];
+            case 1:
+                conn = _a.sent();
+                return [4 /*yield*/, conn.query('INSERT INTO order_products(product_id, order_id,quantity) VALUES($1,$2,$3) RETURNING *', [pid, order_id, quantity])];
+            case 2:
+                tmp = _a.sent();
+                conn.release();
+                return [2 /*return*/, tmp.rows[0]];
+            case 3:
+                err_2 = _a.sent();
+                throw new Error("insert order ".concat(err_2));
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
 describe("Products testing", function () {
     it("Expect create to be defined", function () {
         expect(manager.create).toBeDefined();
@@ -118,7 +165,7 @@ describe("Products testing", function () {
         expect(manager.delete).toBeDefined();
     });
     beforeEach(function () { return __awaiter(void 0, void 0, void 0, function () {
-        var conn, err_2;
+        var conn, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -141,8 +188,8 @@ describe("Products testing", function () {
                     conn.release();
                     return [3 /*break*/, 7];
                 case 6:
-                    err_2 = _a.sent();
-                    throw new Error("A prepare Error ".concat(err_2));
+                    err_3 = _a.sent();
+                    throw new Error("A prepare Error ".concat(err_3));
                 case 7: return [2 /*return*/];
             }
         });
@@ -212,7 +259,7 @@ describe("Products testing", function () {
             }
         });
     }); });
-    it("Expect delete to delete an order", function () { return __awaiter(void 0, void 0, void 0, function () {
+    it("Expect to delete an order", function () { return __awaiter(void 0, void 0, void 0, function () {
         var user, ordr, res, conn, res2;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -233,6 +280,45 @@ describe("Products testing", function () {
                     res2 = _a.sent();
                     conn.release();
                     expect(res2.rowCount).toBe(0);
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it("Expect list user orders to work", function () { return __awaiter(void 0, void 0, void 0, function () {
+        var _a, user, token, order, pdt1, pdt2, pdt3, ordPdt1, ordPdt2, ordPdt3, result;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, insertUser('hassan', 'yossry', 'pass123')];
+                case 1:
+                    _a = _b.sent(), user = _a.user, token = _a.token;
+                    return [4 /*yield*/, insertOrder(String(user.id), false)];
+                case 2:
+                    order = _b.sent();
+                    return [4 /*yield*/, insertProducts('TV SET', 300)];
+                case 3:
+                    pdt1 = _b.sent();
+                    return [4 /*yield*/, insertProducts('PHONE SET', 300)];
+                case 4:
+                    pdt2 = _b.sent();
+                    return [4 /*yield*/, insertProducts('playstation SET', 300)];
+                case 5:
+                    pdt3 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt1.id, order.id, 2)];
+                case 6:
+                    ordPdt1 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt2.id, order.id, 2)];
+                case 7:
+                    ordPdt2 = _b.sent();
+                    return [4 /*yield*/, insertOrderProduct(pdt3.id, order.id, 2)];
+                case 8:
+                    ordPdt3 = _b.sent();
+                    return [4 /*yield*/, manager.orders_from_user(String(user.id))];
+                case 9:
+                    result = _b.sent();
+                    expect(result).toBeInstanceOf(Array);
+                    expect(result[0]).toEqual(__assign(__assign({}, order), { product_id: pdt1.id, quantity: 2 }));
+                    expect(result[1]).toEqual(__assign(__assign({}, order), { product_id: pdt2.id, quantity: 2 }));
+                    expect(result[2]).toEqual(__assign(__assign({}, order), { product_id: pdt3.id, quantity: 2 }));
                     return [2 /*return*/];
             }
         });

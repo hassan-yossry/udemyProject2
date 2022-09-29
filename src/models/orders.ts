@@ -56,32 +56,14 @@ export class Order_Manager{
     
     }
 
-    async orders_from_user(id:string):Promise<Order[]>{
+    async orders_from_user(id:string):Promise<{order_id:number,id:number,complete:boolean,product_id:number,quantity:number,user_id:number}[]>{
         try {
-            const connect =await client.connect();
-            //const query = "SELECT * FROM order_products INNER JOIN orders ON order_products.id = orders.id";
-            
-
-            const query = "SELECT order_products.product_id FROM order_products INNER JOIN orders ON order_products.order_id = orders.id";
-            const result = await connect.query(query);
-            connect.release();                                                                                                                                                                                                                                                              
-
-            const arr = await Promise.all(result.rows.map(async (itm)=>{
-                const connect =await client.connect();
-                const query = "SELECT * FROM products WHERE id = $1";
-                console.log(itm.product_id)
-                const result = await connect.query(query,[itm.product_id]);
-                connect.release();
-                return result.rows[0]
- 
-
-            }))
-
-
-
-            return arr;
+            const connect =await client.connect();           
+            const query = "SELECT  orders.id,orders.user_id, orders.complete, order_products.product_id, order_products.quantity FROM order_products INNER JOIN orders ON order_products.order_id = orders.id WHERE orders.user_id = $1";
+            const result = await connect.query(query,[parseInt(id)]);
+            connect.release();  
+            return result.rows;
          }catch(err){
-
             throw new Error(`Cannot fetch Order with id = ${id} Error: ${err}`);
         }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
     }
@@ -107,7 +89,3 @@ export class Order_Manager{
     
     
 }
-//const tst= new Order_Manager();
-//console.log('hi')
-//tst.create({id:0, user_id:2,product_id:2,complete:true,quantity:1}).then(res=>console.log(res))
-//tst.index().then(res => console.log(res))
